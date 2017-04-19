@@ -31,7 +31,6 @@ def host_info(number_of_hosts , hosts):
 		if c != []:			
 			hosts[str(c)] = str(b["devices"][k]["attachmentPoint"])
 	return(hosts)
-
 def switch_byte( number_of_switches, switch_dpids ):
 	for k in range(0, number_of_switches):
 		print switch_dpids[k]
