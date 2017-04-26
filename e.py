@@ -23,7 +23,9 @@ def switch_info ( number_of_switches , switch_dpids ):
 		DPID = dat [k]["switchDPID"]
 		DPID = DPID.decode()
 		switch_dpids.append(DPID)
+		bandwidth_one ( DPID, number_of_switches );
 	return (switch_dpids)
+	bandwidth_one ( DPID, number_of_switches );
 
 def host_info(number_of_hosts , hosts):
 	a = requests.get("http://10.0.2.15:8080/wm/device/")
@@ -43,6 +45,32 @@ def switch_byte( number_of_switches, switch_dpids ):
 		print '\t Cookie:', b["flows"][0]['cookie']
 		print '\t byte count:', b["flows"][0]['byte_count']
 
+def bandwidth_one ( DPID , number_of_switches ):
+	print DPID
+	for port in range(1,5):
+		try:				
+			a = requests.get("http://10.0.2.15:8080/wm/statistics/bandwidth/"+DPID+"/"+str(port)+"/json")
+			b = a.json()
+			print "\tport :", b[0]["port"]
+			bandwidth = int (b[0]["bits-per-second-rx"])
+			print "\t\tBits per Second :", bandwidth
+			if bandwidth > 15000:
+				print 'adding static flow rule:'
+				one = 'curl -X POST -d'
+				seven = "'"
+				two = '{"switch":"' + DPID
+				three = '", "name":"flow-mode-' + port
+				four = '", "cookie":"0", "priority":"32768", "in_port":"'+ port
+				five = '", "active":"true", "actions":"no-forward"}'
+				eight = "'"
+				six = ' http://10.0.2.15:8080/wm/staticentrypusher/json'
+				command = one + seven + two + three + four + five + eight + six
+				os.system(command)				
+				print 'flow rule added'
+		except Exception as e:
+			print "port", port," no connected", e		
+
+'''
 def bandwidth ( switch_dpids, number_of_switches ):
 	for k in range(	0, number_of_switches ):
 		print switch_dpids[k]
@@ -66,6 +94,7 @@ def bandwidth ( switch_dpids, number_of_switches ):
 					print 'flow rule added'
 			except:
 				print "port", port," no connected"
+'''
 
 def stat_enable():
 
@@ -86,7 +115,7 @@ def start():
 		switch_dpids = switch_info ( number_of_switches, switch_dpids ) ;
 		hosts = host_info ( number_of_hosts , hosts );
 		switch_byte ( number_of_switches, switch_dpids );			
-		bandwidth ( switch_dpids, number_of_switches );
+		#bandwidth ( switch_dpids, number_of_switches );
 
 	except Exception as e:
 		print'Error occured', e
